@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
@@ -26,12 +25,13 @@ class UserController extends Controller
         //     return response()->json([$validated->errors()],404);
         // }
 
-        User::create([
+        $user = User::create([
             'name'=> $request->name,
             'email'=> $request->email,
             'password'=> bcrypt($request->password)
         ]);
-            return response()->json(['successs'=> true],200);
+        $token = $user->createToken('create_token')->plainTextToken;
+        return response()->json(['user'=> $user,'token'=> $token ],200);
 
     }
 
@@ -43,14 +43,19 @@ class UserController extends Controller
         if($validator->fails()) {
             return response()->json(['error'=> $validator->errors()],404);
         }
-        if(Auth::attempt(['email'=> $request->email,'password'=> $request->password])) {
-            return response()->json(['successs'=> true],200);
-        }
-        else {
+        if(!Auth::attempt(['email'=> $request->email,'password'=> $request->password])) {
             return response()->json(['error'=> 'Autorized'],404);
         }
+        $user = User::where('email', $request->email)->first();
+        $token = $user->createToken('create_token')->plainTextToken;
+        return response()->json(['user'=> $user,'token'=> $token ],200);
         // $user=User::where(['email', $request->email])->first();
+    }
 
+    public function logout($id) {
+        $user = User::where('id',$id)->first();
+        $user->tokens()->delete();
+        return response()->json(['success'=> 'Logout correctamente'],200);
     }
 
     public function destroy($id) {
