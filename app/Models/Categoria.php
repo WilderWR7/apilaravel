@@ -8,4 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class Categoria extends Model
 {
     use HasFactory;
+
+    protected $guarded = [];
+    public function campeonato () {
+        return $this->belongsTo(Campeonato::class);
+    }
+    public function torneos () {
+        return $this->hasMany(Torneo::class);
+    }
 }
